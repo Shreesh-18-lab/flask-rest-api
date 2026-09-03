@@ -25,6 +25,12 @@ userFields = {
     'email': fields.String
 }
 
+
+def is_gmail(email: str) -> bool:
+    if not email or not isinstance(email, str):
+        return False
+    return email.strip().lower().endswith('gmail.com')
+
 class Users(Resource):
     @marshal_with(userFields)
     def get(self):
@@ -34,6 +40,8 @@ class Users(Resource):
     @marshal_with(userFields)
     def post(self):
         args = user_args.parse_args()
+        if not is_gmail(args['email']):
+            abort(400, message="Email must end with gmail.com")
         user = UserModel(name=args["name"], email=args["email"])
         db.session.add(user)
         db.session.commit()
@@ -55,6 +63,8 @@ class User(Resource):
         user = UserModel.query.filter_by(id=id).first()
         if not user:
             abort(404, "User not found")
+        if not is_gmail(args['email']):
+            abort(400, message="Email must end with gmail.com")
         user.name = args['name']
         user.email = args['email']
         db.session.commit()
